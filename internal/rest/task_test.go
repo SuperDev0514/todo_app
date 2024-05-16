@@ -10,7 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
@@ -43,7 +45,7 @@ func TestTasks_Delete(t *testing.T) {
 	}{
 		{
 			"OK: 200",
-			func(s *resttesting.FakeTaskService) {},
+			func(_ *resttesting.FakeTaskService) {},
 			output{
 				http.StatusOK,
 				&struct{}{},
@@ -77,12 +79,11 @@ func TestTasks_Delete(t *testing.T) {
 	//-
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			router := gin.New()
+
+			router := newRouter()
 			svc := &resttesting.FakeTaskService{}
 			tt.setup(svc)
 
@@ -184,12 +185,12 @@ func TestTasks_Post(t *testing.T) {
 	//-
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			router := gin.New()
+
+			router := newRouter()
+
 			svc := &resttesting.FakeTaskService{}
 			tt.setup(svc)
 
@@ -284,12 +285,11 @@ func TestTasks_Read(t *testing.T) {
 	//-
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			router := gin.New()
+
+			router := newRouter()
 			svc := &resttesting.FakeTaskService{}
 			tt.setup(svc)
 
@@ -330,7 +330,7 @@ func TestTasks_Update(t *testing.T) {
 	}{
 		{
 			"OK: 200",
-			func(s *resttesting.FakeTaskService) {},
+			func(_ *resttesting.FakeTaskService) {},
 			func() []byte {
 				b, _ := json.Marshal(&rest.UpdateTasksRequest{
 					Description: "update task",
@@ -395,12 +395,11 @@ func TestTasks_Update(t *testing.T) {
 	//-
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			router := gin.New()
+
+			router := newRouter()
 			svc := &resttesting.FakeTaskService{}
 			tt.setup(svc)
 
@@ -427,7 +426,8 @@ type test struct {
 	target   interface{}
 }
 
-func doRequest(router *gin.Engine, req *http.Request) *http.Response {
+
+func doRequest(router *chi.Mux, req *http.Request) *http.Response {
 	rr := httptest.NewRecorder()
 
 	router.ServeHTTP(rr, req)
@@ -446,4 +446,11 @@ func assertResponse(t *testing.T, res *http.Response, test test) {
 	if !cmp.Equal(test.expected, test.target, cmpopts.IgnoreUnexported(time.Time{})) {
 		t.Fatalf("expected results don't match: %s", cmp.Diff(test.expected, test.target, cmpopts.IgnoreUnexported(time.Time{})))
 	}
+}
+
+func newRouter() *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(render.SetContentType(render.ContentTypeJSON))
+
+	return r
 }
