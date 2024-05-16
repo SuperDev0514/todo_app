@@ -6,8 +6,10 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
+
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -18,6 +20,12 @@ import (
 	"github.com/MarioCarrion/todo-api/internal/rest"
 	"github.com/MarioCarrion/todo-api/internal/rest/resttesting"
 )
+
+func TestMain(m *testing.M) {
+	gin.SetMode(gin.TestMode)
+
+	os.Exit(m.Run())
+}
 
 func TestTasks_Delete(t *testing.T) {
 	t.Parallel()
@@ -73,6 +81,7 @@ func TestTasks_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
 
 			router := newRouter()
 			svc := &resttesting.FakeTaskService{}
@@ -179,7 +188,9 @@ func TestTasks_Post(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+
 			router := newRouter()
+
 			svc := &resttesting.FakeTaskService{}
 			tt.setup(svc)
 
@@ -276,6 +287,7 @@ func TestTasks_Read(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
 
 			router := newRouter()
 			svc := &resttesting.FakeTaskService{}
@@ -386,6 +398,7 @@ func TestTasks_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+
 			router := newRouter()
 			svc := &resttesting.FakeTaskService{}
 			tt.setup(svc)
@@ -412,6 +425,7 @@ type test struct {
 	expected interface{}
 	target   interface{}
 }
+
 
 func doRequest(router *chi.Mux, req *http.Request) *http.Response {
 	rr := httptest.NewRecorder()

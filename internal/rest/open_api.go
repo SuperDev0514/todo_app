@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/ghodss/yaml"
 	"github.com/go-chi/chi/v5"
 )
@@ -266,6 +267,7 @@ func NewOpenAPI3() openapi3.T {
 
 	return swagger
 }
+
 
 func RegisterOpenAPI(router *chi.Mux) {
 	swagger := NewOpenAPI3()

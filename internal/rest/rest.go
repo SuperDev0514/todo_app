@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+
 	"github.com/go-chi/render"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"go.opentelemetry.io/otel"
@@ -18,6 +19,7 @@ type ErrorResponse struct {
 	Error       string            `json:"error"`
 	Validations validation.Errors `json:"validations,omitempty"`
 }
+
 
 func renderErrorResponse(w http.ResponseWriter, r *http.Request, msg string, err error) {
 	resp := ErrorResponse{Error: msg}
@@ -45,6 +47,7 @@ func renderErrorResponse(w http.ResponseWriter, r *http.Request, msg string, err
 	}
 
 	if err != nil {
+
 		_, span := otel.Tracer(otelName).Start(r.Context(), "renderErrorResponse")
 		defer span.End()
 
@@ -52,6 +55,7 @@ func renderErrorResponse(w http.ResponseWriter, r *http.Request, msg string, err
 	}
 
 	// XXX fmt.Printf("Error: %v\n", err)
+
 
 	render.Status(r, status)
 	render.JSON(w, r, &resp)
