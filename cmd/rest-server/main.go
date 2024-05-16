@@ -17,10 +17,14 @@ import (
 	"github.com/didip/tollbooth/v6"
 	"github.com/didip/tollbooth/v6/limiter"
 	esv7 "github.com/elastic/go-elasticsearch/v7"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	rv8 "github.com/go-redis/redis/v8"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/labstack/echo/v4"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
+
+  
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/riandyrn/otelchi"
 	"go.uber.org/zap"
 
 	"github.com/MarioCarrion/todo-api/cmd/internal"
@@ -110,15 +114,12 @@ func run(env, address string) (<-chan error, error) {
 		return nil, internaldomain.WrapErrorf(err, internaldomain.ErrorCodeUnknown, "internal.NewOTExporter")
 	}
 
-	logging := func(c echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			logger.Info(c.Request().Method,
-				zap.Time("time", time.Now()),
-				zap.String("url", c.Request().URL.String()),
-			)
 
-			return nil
-		}
+	logging := func(c *gin.Context) {
+		logger.Info(c.Request.Method,
+			zap.Time("time", time.Now()),
+			zap.String("url", c.Request.URL.String()),
+		)
 	}
 
 	//-
@@ -128,7 +129,9 @@ func run(env, address string) (<-chan error, error) {
 		DB:            pool,
 		ElasticSearch: esClient,
 		Metrics:       promExporter,
-		Middlewares:   []echo.MiddlewareFunc{otelecho.Middleware("todo-api-server"), logging},
+
+
+		Middlewares:   []func(next http.Handler) http.Handler{otelchi.Middleware("todo-api-server"), logging},
 		Redis:         rdb,
 		Logger:        logger,
 		Memcached:     memcached,
@@ -195,14 +198,17 @@ type serverConfig struct {
 	Redis         *rv8.Client
 	Memcached     *memcache.Client
 	Metrics       http.Handler
-	Middlewares   []echo.MiddlewareFunc
+
+
+	Middlewares   []func(next http.Handler) http.Handler
 	Logger        *zap.Logger
 }
 
 func newServer(conf serverConfig) (*http.Server, error) {
-	router := echo.New()
-	router.HTTPErrorHandler = rest.HTTPErrorHandler
-	router.Debug = false
+
+
+	router := chi.NewRouter()
+	router.Use(render.SetContentType(render.ContentTypeJSON))
 
 	for _, mw := range conf.Middlewares {
 		router.Use(mw)
@@ -234,9 +240,11 @@ func newServer(conf serverConfig) (*http.Server, error) {
 	//-
 
 	fsys, _ := fs.Sub(content, "static")
-	router.GET("/static/*", echo.WrapHandler(http.StripPrefix("/static/", http.FileServer(http.FS(fsys)))))
 
-	router.GET("/metrics", echo.WrapHandler(conf.Metrics))
+
+	router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(fsys))))
+
+	router.GET("/metrics", gin.WrapH(conf.Metrics))
 
 	//-
 
