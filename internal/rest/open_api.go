@@ -6,6 +6,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/ghodss/yaml"
+
 	"github.com/go-chi/chi/v5"
 )
 
@@ -269,6 +270,7 @@ func NewOpenAPI3() openapi3.T {
 }
 
 
+
 func RegisterOpenAPI(router *chi.Mux) {
 	swagger := NewOpenAPI3()
 
@@ -279,7 +281,9 @@ func RegisterOpenAPI(router *chi.Mux) {
 	router.Get("/openapi3.yaml", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/x-yaml")
 
+	router.GET("/openapi3.yaml", func(r echo.Context) error {
 		data, _ := yaml.Marshal(&swagger)
+
 
 		_, _ = w.Write(data)
 

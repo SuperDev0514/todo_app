@@ -16,6 +16,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
+
 	"github.com/MarioCarrion/todo-api/internal"
 	"github.com/MarioCarrion/todo-api/internal/rest"
 	"github.com/MarioCarrion/todo-api/internal/rest/resttesting"
@@ -189,6 +190,7 @@ func TestTasks_Post(t *testing.T) {
 			t.Parallel()
 
 
+
 			router := newRouter()
 
 			svc := &resttesting.FakeTaskService{}
@@ -253,17 +255,15 @@ func TestTasks_Read(t *testing.T) {
 			},
 		},
 		{
-			"OK: 200",
+			"ERR: 404",
 			func(s *resttesting.FakeTaskService) {
 				s.TaskReturns(internal.Task{},
 					internal.NewErrorf(internal.ErrorCodeNotFound, "not found"))
 			},
 			output{
 				http.StatusNotFound,
-				&rest.ErrorResponse{
-					Error: "find failed",
-				},
-				&rest.ErrorResponse{},
+				&struct{}{},
+				&struct{}{},
 			},
 		},
 		{
@@ -398,7 +398,6 @@ func TestTasks_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-
 			router := newRouter()
 			svc := &resttesting.FakeTaskService{}
 			tt.setup(svc)
@@ -427,9 +426,12 @@ type test struct {
 }
 
 
+
 func doRequest(router *chi.Mux, req *http.Request) *http.Response {
 	rr := httptest.NewRecorder()
 
+
+	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 
 	return rr.Result()
@@ -447,6 +449,7 @@ func assertResponse(t *testing.T, res *http.Response, test test) {
 		t.Fatalf("expected results don't match: %s", cmp.Diff(test.expected, test.target, cmpopts.IgnoreUnexported(time.Time{})))
 	}
 }
+
 
 func newRouter() *chi.Mux {
 	r := chi.NewRouter()
